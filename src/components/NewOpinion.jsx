@@ -1,7 +1,11 @@
-import { useActionState } from 'react';
+import { useActionState, use } from 'react';
+import { OpinionsContext } from '../store/opinions-context';
+import Submit from './Submit';
 
 export function NewOpinion() {
-  const handleFormAction = (prevState, formData) => {
+  const { addOpinion } = use(OpinionsContext);
+
+  async function handleFormAction(prevState, formData) {
     const form = {
       userName: formData.get('userName'),
       title: formData.get('title'),
@@ -20,8 +24,12 @@ export function NewOpinion() {
       );
     }
 
-    if (!form.title || form.title.trim().length === 0) {
-      errors.push('Title is required.');
+    if (
+      !form.title ||
+      form.title.trim().length === 0 ||
+      form.title.trim().length < 5
+    ) {
+      errors.push('Title is required and must be at least 5 characters long.');
     }
 
     if (!form.body || form.body.trim().length === 0) {
@@ -32,8 +40,10 @@ export function NewOpinion() {
       return { errors, data: form };
     }
 
+    await addOpinion({ ...form });
+
     return { errors: null };
-  };
+  }
 
   const [formState, formAction] = useActionState(handleFormAction, {
     errors: null,
@@ -46,17 +56,32 @@ export function NewOpinion() {
         <div className="control-row">
           <p className="control">
             <label htmlFor="userName">Your Name</label>
-            <input type="text" id="userName" name="userName" />
+            <input
+              type="text"
+              id="userName"
+              name="userName"
+              defaultValue={formState.data?.userName}
+            />
           </p>
 
           <p className="control">
             <label htmlFor="title">Title</label>
-            <input type="text" id="title" name="title" />
+            <input
+              type="text"
+              id="title"
+              name="title"
+              defaultValue={formState.data?.title}
+            />
           </p>
         </div>
         <p className="control">
           <label htmlFor="body">Your Opinion</label>
-          <textarea id="body" name="body" rows={5}></textarea>
+          <textarea
+            id="body"
+            name="body"
+            rows={5}
+            defaultValue={formState.data?.body}
+          ></textarea>
         </p>
 
         {formState.errors && (
@@ -70,9 +95,7 @@ export function NewOpinion() {
           </div>
         )}
 
-        <p className="actions">
-          <button type="submit">Submit</button>
-        </p>
+        <Submit />
       </form>
     </div>
   );
